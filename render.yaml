@@ -2,7 +2,7 @@ services:
   - type: web
     name: student-performance-analyzer
     runtime: docker
-    plan: starter
+    plan: free
     region: singapore
     dockerfilePath: ./Dockerfile
     dockerContext: .
@@ -12,10 +12,6 @@ services:
       - app.csbblr.online
     envVars:
       - key: APP_DATA_DIR
-        value: /var/data
+        value: ""
       - key: TZ
         value: Asia/Kolkata
-    disk:
-      name: app-data
-      mountPath: /var/data
-      sizeGB: 1
