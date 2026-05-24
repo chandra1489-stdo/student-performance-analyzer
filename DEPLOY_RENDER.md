@@ -15,7 +15,7 @@ This repository is ready for a Docker-based Render deployment.
 1. Push this repo to GitHub/GitLab/Bitbucket.
 2. In Render, create a new Blueprint from the repo, or create a Web Service and select Docker.
 3. Render will build the Dockerfile and run the service using the command in the image.
-4. The app data lives on the Render disk mounted at `/var/data`.
+4. On the free plan, app data is stored in the service filesystem and can reset when Render redeploys or restarts the service.
 
 ## Connect `app.csbblr.online`
 
@@ -53,5 +53,5 @@ https://app.csbblr.online
 ## Notes
 
 - The configured region is `singapore`.
-- The configured instance plan is `starter` because persistent disks are not available on the free plan.
-- Uploaded photos are persisted through `/var/data/photos` and served through `www/photos`.
+- The configured instance plan is `free`.
+- Uploaded photos and CSV changes are not guaranteed to persist on the free plan. Upgrade to a paid instance with a persistent disk when you need durable production data.
