@@ -3,7 +3,7 @@ if (is.na(port)) {
   port <- 10000L
 }
 
-required_packages <- c("shiny", "shinydashboard", "DT", "png", "plotly")
+required_packages <- c("shiny", "shinydashboard", "DT", "png")
 missing_packages <- required_packages[
   !vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)
 ]
