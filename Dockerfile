@@ -21,7 +21,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     r-cran-shinydashboard \
     r-cran-dt \
     r-cran-png \
-    r-cran-plotly \
     pandoc \
     && rm -rf /var/lib/apt/lists/*
 
