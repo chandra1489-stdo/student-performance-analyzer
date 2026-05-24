@@ -3,7 +3,6 @@ library(shinydashboard)
 library(DT)
 library(png)
 library(grDevices)
-library(plotly)
 
 APP_DATA_DIR <- Sys.getenv("APP_DATA_DIR", unset = "")
 
@@ -2660,7 +2659,7 @@ server <- function(input, output, session) {
         fluidRow(
           box(title = "Department Distribution", width = 4, plotOutput("g_dept", height = 270)),
           box(title = "Year-wise Enrollment", width = 4, plotOutput("g_year", height = 270)),
-          box(title = "Grade Composition", width = 4, plotlyOutput("g_grade_interactive", height = 300))
+          box(title = "Grade Composition", width = 4, plotOutput("g_grade_interactive", height = 300))
         ),
         fluidRow(
           box(title = "Overall Subject Performance", width = 8, plotOutput("g_sub_avgs", height = 320)),
@@ -2983,7 +2982,7 @@ server <- function(input, output, session) {
           column(8, box(width = NULL, title = "Subject Benchmark", plotOutput("stu_benchmark", height = 420)))
         ),
         fluidRow(
-          box(title = "Academic Trend", width = 6, plotlyOutput("stu_progress_plot", height = 280)),
+          box(title = "Academic Trend", width = 6, plotOutput("stu_progress_plot", height = 280)),
           box(title = "Eligibility Snapshot", width = 6, uiOutput("student_service_cards"))
         )
       ),
@@ -5111,46 +5110,24 @@ server <- function(input, output, session) {
     barplot(counts, col = c("#b91c1c", "#f59e0b", "#0ea5e9", "#15803d"), border = NA, las = 2)
   })
 
-  output$g_grade_interactive <- renderPlotly({
+  output$g_grade_interactive <- renderPlot({
     db <- dashboard_students()
     active <- db[db$Grade != "N/A" & nzchar(db$Grade), , drop = FALSE]
     if (nrow(active) == 0) {
-      return(
-        plot_ly(source = "grade_mix") %>%
-          layout(
-            title = "<b>Grade Composition</b>",
-            annotations = list(
-              list(
-                text = "No published grades yet",
-                x = 0.5,
-                y = 0.5,
-                xref = "paper",
-                yref = "paper",
-                showarrow = FALSE,
-                font = list(size = 16, color = "#64748b")
-              )
-            )
-          ) %>%
-          config(displayModeBar = FALSE)
-      )
+      plot.new()
+      text(0.5, 0.5, "No published grades yet", col = "#64748b", cex = 1.1)
+      return(invisible(NULL))
     }
 
-    grade_table <- as.data.frame(table(active$Grade), stringsAsFactors = FALSE)
-    colnames(grade_table) <- c("Grade", "Count")
-
-    plot_ly(
-      data = grade_table,
-      labels = ~Grade,
-      values = ~Count,
-      type = "pie",
-      source = "grade_mix",
-      hole = 0.58,
-      textinfo = "label+percent",
-      hoverinfo = "label+value+percent",
-      marker = list(colors = c("#1f7a4d", "#0f766e", "#d97706", "#b45309", "#b91c1c"))
-    ) %>%
-      layout(title = "<b>Grade Composition</b>", showlegend = TRUE) %>%
-      config(displayModeBar = TRUE)
+    grade_counts <- table(active$Grade)
+    colors <- c("A+" = "#1f7a4d", "A" = "#0f766e", "B" = "#d97706", "C" = "#b45309", "F" = "#b91c1c")
+    pie(
+      grade_counts,
+      labels = paste0(names(grade_counts), " (", grade_counts, ")"),
+      col = colors[names(grade_counts)],
+      border = "white",
+      main = "Grade Composition"
+    )
   })
 
   output$g_attendance_vs_result <- renderPlot({
@@ -5253,22 +5230,29 @@ server <- function(input, output, session) {
     legend("topright", legend = c("Me", "College Avg"), fill = c("#ef6a3a", "#cbd5e1"), bty = "n")
   })
 
-  output$stu_progress_plot <- renderPlotly({
+  output$stu_progress_plot <- renderPlot({
     stu <- current_student()
     if (nrow(stu) == 0) return(NULL)
     if (!is_results_published(stu)) return(NULL)
     snapshot <- student_snapshot(stu)
+    scores <- c(stu$PrevCGPA[1], snapshot$results$sgpa, snapshot$results$cgpa)
+    names(scores) <- c("Previous CGPA", "Current SGPA", "Current CGPA")
 
-    plot_ly(
-      x = c("Previous CGPA", "Current SGPA", "Current CGPA"),
-      y = c(stu$PrevCGPA[1], snapshot$results$sgpa, snapshot$results$cgpa),
-      type = "scatter",
-      mode = "lines+markers",
-      line = list(color = "#5b1f41", width = 4),
-      marker = list(size = 10, color = c("#94a3b8", "#ef6a3a", "#15803d"))
-    ) %>%
-      layout(yaxis = list(title = "Score", range = c(0, 10)), xaxis = list(title = "")) %>%
-      config(displayModeBar = FALSE)
+    plot(
+      seq_along(scores),
+      scores,
+      type = "b",
+      pch = 19,
+      lwd = 3,
+      col = "#5b1f41",
+      xaxt = "n",
+      ylim = c(0, 10),
+      xlab = "",
+      ylab = "Score",
+      main = "Academic Trend"
+    )
+    axis(1, at = seq_along(scores), labels = names(scores))
+    grid(nx = NA, ny = NULL, col = "#e5e7eb")
   })
 
   output$student_service_cards <- renderUI({
