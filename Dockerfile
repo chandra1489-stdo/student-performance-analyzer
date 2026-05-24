@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pandoc \
     && rm -rf /var/lib/apt/lists/*
 
-RUN R -e "install.packages(c('shiny', 'shinydashboard', 'DT', 'png', 'plotly'), repos = 'https://cloud.r-project.org')"
+RUN R -e "install.packages(c('shiny', 'shinydashboard', 'DT', 'png', 'plotly'), repos = 'https://cloud.r-project.org'); stopifnot(all(vapply(c('shiny', 'shinydashboard', 'DT', 'png', 'plotly'), requireNamespace, logical(1), quietly = TRUE)))"
 
 WORKDIR /app
 COPY . /app
