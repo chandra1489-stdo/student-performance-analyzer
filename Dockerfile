@@ -19,7 +19,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg-dev \
     r-cran-shiny \
     r-cran-shinydashboard \
-    r-cran-dt \
     r-cran-png \
     pandoc \
     && rm -rf /var/lib/apt/lists/*

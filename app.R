@@ -1,6 +1,5 @@
 library(shiny)
 library(shinydashboard)
-library(DT)
 library(png)
 library(grDevices)
 
@@ -2762,7 +2761,7 @@ server <- function(input, output, session) {
           )
         ),
         fluidRow(
-          box(title = "Student Registry", width = 12, DTOutput("master_dt"))
+          box(title = "Student Registry", width = 12, tableOutput("master_dt"))
         )
       ),
       tabItem(
@@ -2791,7 +2790,7 @@ server <- function(input, output, session) {
           )
         ),
         fluidRow(
-          box(title = "Staff Accounts", width = 12, DTOutput("staff_dt"))
+          box(title = "Staff Accounts", width = 12, tableOutput("staff_dt"))
         )
       ),
       tabItem(
@@ -2832,7 +2831,7 @@ server <- function(input, output, session) {
           box(
             title = "Academic Excellence List",
             width = 5,
-            DTOutput("topper_dt")
+            tableOutput("topper_dt")
           )
         ),
         fluidRow(
@@ -2957,7 +2956,7 @@ server <- function(input, output, session) {
             ),
             uiOutput("timetable_editor_ui"),
             tags$hr(),
-            DTOutput("timetable_dt")
+            tableOutput("timetable_dt")
           )
         )
       ),
@@ -2989,7 +2988,7 @@ server <- function(input, output, session) {
       tabItem(
         tabName = "student_marks",
         fluidRow(
-          box(title = "Official Marksheet", width = 7, DTOutput("stu_marks_dt")),
+          box(title = "Official Marksheet", width = 7, tableOutput("stu_marks_dt")),
           box(title = "Performance Summary", width = 5, uiOutput("student_summary_panel"))
         )
       ),
@@ -3914,7 +3913,7 @@ server <- function(input, output, session) {
     }))
   })
 
-  output$staff_dt <- renderDT({
+  output$staff_dt <- renderTable({
     users <- get_users()
     staff_db <- users[users$Role == "faculty", c("RegNo", "Name", "Email", "StaffRole", "Approved", "UpdatedAt"), drop = FALSE]
     if (nrow(staff_db) > 0) {
@@ -3925,8 +3924,8 @@ server <- function(input, output, session) {
       updated_order[is.na(updated_order)] <- as.POSIXct("1970-01-01", tz = "Asia/Calcutta")
       staff_db <- staff_db[order(ifelse(staff_db$Approved == "Pending", 0, 1), -as.numeric(updated_order)), , drop = FALSE]
     }
-    datatable(staff_db, options = list(pageLength = 8, scrollX = TRUE), rownames = FALSE, selection = "none")
-  })
+    head(staff_db, 25)
+  }, striped = TRUE, bordered = TRUE, spacing = "s")
 
   observeEvent(input$approve_staff, {
     req(input$staff_manage_reg)
@@ -4591,28 +4590,16 @@ server <- function(input, output, session) {
     }
   })
 
-  output$timetable_dt <- renderDT({
+  output$timetable_dt <- renderTable({
     if (is.null(input$tt_dept) || !nzchar(input$tt_dept) || is.null(input$tt_semester) || !nzchar(input$tt_semester)) {
-      return(datatable(data.frame(Message = "Select department and semester to view the timetable.", stringsAsFactors = FALSE), options = list(dom = "t"), rownames = FALSE))
+      return(data.frame(Message = "Select department and semester to view the timetable.", stringsAsFactors = FALSE))
     }
     rows <- selected_timetable_rows()
     if (nrow(rows) == 0) {
-      return(
-        datatable(
-          data.frame(Message = "No timetable saved yet. HoD can fill the blank timetable form for this semester.", stringsAsFactors = FALSE),
-          options = list(dom = "t"),
-          rownames = FALSE,
-          selection = "none"
-        )
-      )
+      return(data.frame(Message = "No timetable saved yet. HoD can fill the blank timetable form for this semester.", stringsAsFactors = FALSE))
     }
-    datatable(
-      rows[, c("Day", "Time", "Subject", "TeacherName"), drop = FALSE],
-      options = list(dom = "t", pageLength = 10),
-      rownames = FALSE,
-      selection = "none"
-    )
-  })
+    rows[, c("Day", "Time", "Subject", "TeacherName"), drop = FALSE]
+  }, striped = TRUE, bordered = TRUE, spacing = "s")
 
   output$college_highlights_ui <- renderUI({
     items <- college_highlights()
@@ -5150,22 +5137,17 @@ server <- function(input, output, session) {
     barplot(fee_table, col = c("#15803d", "#dc2626", "#2563eb"), border = NA)
   })
 
-  output$master_dt <- renderDT({
+  output$master_dt <- renderTable({
     registry <- with_attendance_metric(filtered_registry())
     registry$Attendance <- registry$AttendanceMetric
-    datatable(
-      registry[, c("RegNo", "Name", "Dept", "Year", "Semester", "Scheme", "Grade", "Percentage", "Attendance", "FeeStatus", "Mentor", "UpdatedAt"), drop = FALSE],
-      options = list(pageLength = 10, scrollX = TRUE),
-      rownames = FALSE,
-      selection = "none"
-    )
-  })
+    head(registry[, c("RegNo", "Name", "Dept", "Year", "Semester", "Scheme", "Grade", "Percentage", "Attendance", "FeeStatus", "Mentor", "UpdatedAt"), drop = FALSE], 25)
+  }, striped = TRUE, bordered = TRUE, spacing = "s")
 
-  output$topper_dt <- renderDT({
+  output$topper_dt <- renderTable({
     db <- get_students()
     top_db <- db[order(-db$Percentage, db$Name), c("RegNo", "Name", "Dept", "Percentage", "CGPA"), drop = FALSE]
-    datatable(head(top_db, 8), options = list(dom = "t", pageLength = 8), rownames = FALSE, selection = "none")
-  })
+    head(top_db, 8)
+  }, striped = TRUE, bordered = TRUE, spacing = "s")
 
   output$stu_profile <- renderUI({
     stu <- current_student()
@@ -5282,19 +5264,14 @@ server <- function(input, output, session) {
     )
   })
 
-  output$stu_marks_dt <- renderDT({
+  output$stu_marks_dt <- renderTable({
     stu <- current_student()
-    if (nrow(stu) == 0) return(datatable(data.frame()))
+    if (nrow(stu) == 0) return(data.frame())
     if (!is_results_published(stu)) {
-      return(datatable(
-        data.frame(Message = "Marks have not been published yet.", stringsAsFactors = FALSE),
-        options = list(dom = "t"),
-        rownames = FALSE,
-        selection = "none"
-      ))
+      return(data.frame(Message = "Marks have not been published yet.", stringsAsFactors = FALSE))
     }
-    datatable(build_marksheet(stu), options = list(pageLength = 8, scrollX = TRUE, autoWidth = TRUE), rownames = FALSE, selection = "none")
-  })
+    build_marksheet(stu)
+  }, striped = TRUE, bordered = TRUE, spacing = "s")
 
   output$student_summary_panel <- renderUI({
     stu <- current_student()
