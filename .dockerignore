@@ -1,0 +1,8 @@
+.RData
+.Rhistory
+.git
+.gitignore
+rsconnect/
+Student_Performance_Analyzer WEB APPLICATION SS/
+*.Rproj
+.Rproj.user/

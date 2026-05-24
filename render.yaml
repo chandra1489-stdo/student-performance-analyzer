@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: student-performance-analyzer
+    runtime: docker
+    plan: starter
+    region: singapore
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    autoDeployTrigger: commit
+    healthCheckPath: /
+    domains:
+      - app.csbblr.online
+    envVars:
+      - key: APP_DATA_DIR
+        value: /var/data
+      - key: TZ
+        value: Asia/Kolkata
+    disk:
+      name: app-data
+      mountPath: /var/data
+      sizeGB: 1
